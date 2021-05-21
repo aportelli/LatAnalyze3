@@ -253,16 +253,39 @@ DMatSample CorrelatorUtils::shift(const DMatSample &c, const Index ts)
     }
 }
 
-DMatSample CorrelatorUtils::fold(const DMatSample &c)
+DMatSample CorrelatorUtils::fold(const DMatSample &c, const CorrelatorModels::ModelPar &par)
 {
     const Index nt  = c[central].rows();
     DMatSample  buf = c;
-
-    FOR_STAT_ARRAY(buf, s)
+    int         sign;
+    bool        fold = false;
+    
+    switch (par.type)
     {
-        for (Index t = 0; t < nt; ++t)
+        case CorrelatorType::cosh:
+        case CorrelatorType::cst:
+            sign = 1;
+            fold = true;
+            break;
+        case CorrelatorType::sinh:
+            sign = -1;
+            fold = true;
+            break;
+        case CorrelatorType::linear:
+            cout << "Linear model is asymmetric: will not fold." << endl;
+            break;
+        default:
+            break;
+    }
+
+    if (fold)
+    {
+        FOR_STAT_ARRAY(buf, s)
         {
-            buf[s](t) = 0.5*(c[s](t) + c[s]((nt - t) % nt));
+            for (Index t = 0; t < nt; ++t)
+            {
+                buf[s](t) = 0.5*(c[s](t) + sign*c[s]((nt - t) % nt));
+            }
         }
     }
 

@@ -234,6 +234,19 @@ DVec XYSampleData::getYError(const Index j)
     return data_.getYError(j);
 }
 
+bool XYSampleData::checkFit()
+{
+    return goodFit_;
+}
+
+void XYSampleData::checkChi2PerDof(double Chi2PerDof)
+{
+    if(Chi2PerDof >= 2 or Chi2PerDof < 0 or isnan(Chi2PerDof)) 
+    {
+        goodFit_ = false;
+    }
+}
+
 // get total fit variance matrix and its pseudo-inverse ////////////////////////
 const DMat & XYSampleData::getFitVarMat(void)
 {
@@ -292,24 +305,32 @@ SampleFitResult XYSampleData::fit(std::vector<Minimizer *> &minimizer,
     result.resize(nSample_);
     result.chi2_.resize(nSample_);
     result.model_.resize(v.size());
+    double chi2PerDof;
+    goodFit_ = true;
     FOR_STAT_ARRAY(result, s)
     {
-        setDataToSample(s);
-        if (s == central)
+        if(goodFit_)
         {
-            sampleResult = data_.fit(minimizer, initCopy, v);
-            initCopy     = sampleResult.segment(0, initCopy.size());
-        }
-        else
-        {
-            sampleResult = data_.fit(*(minimizer.back()), initCopy, v);
-        }
-        result[s]       = sampleResult;
-        result.chi2_[s] = sampleResult.getChi2();
-        for (unsigned int j = 0; j < v.size(); ++j)
-        {
-            result.model_[j].resize(nSample_);
-            result.model_[j][s] = sampleResult.getModel(j);
+            setDataToSample(s);
+            if (s == central)
+            {
+                sampleResult = data_.fit(minimizer, initCopy, v);
+                initCopy     = sampleResult.segment(0, initCopy.size());
+                chi2PerDof   = sampleResult.getChi2PerDof();
+                checkChi2PerDof(chi2PerDof);
+            }
+            else
+            {
+                sampleResult = data_.fit(*(minimizer.back()), initCopy, v);
+                chi2PerDof   = sampleResult.getChi2PerDof();
+            }
+            result[s]       = sampleResult;
+            result.chi2_[s] = sampleResult.getChi2();
+            for (unsigned int j = 0; j < v.size(); ++j)
+            {
+                result.model_[j].resize(nSample_);
+                result.model_[j][s] = sampleResult.getModel(j);
+            }
         }
     }
     result.nPar_    = sampleResult.getNPar();

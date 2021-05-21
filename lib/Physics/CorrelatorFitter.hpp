@@ -56,7 +56,7 @@ namespace CorrelatorModels
 namespace CorrelatorUtils
 {
     DMatSample shift(const DMatSample &c, const Index ts);
-    DMatSample fold(const DMatSample &c);
+    DMatSample fold(const DMatSample &c, const CorrelatorModels::ModelPar &par);
     DMatSample fourierTransform(const DMatSample &c, FFT &fft, 
                                 const unsigned int dir = FFT::Forward);
 };

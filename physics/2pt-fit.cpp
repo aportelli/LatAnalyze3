@@ -110,10 +110,6 @@ int main(int argc, char *argv[])
     nt      = corr[central].rows();
     corr    = corr.block(0, 0, nt, 1);
     corr    = CorrelatorUtils::shift(corr, shift);
-    if (fold)
-    {
-        corr = CorrelatorUtils::fold(corr);
-    }
     
     // make model //////////////////////////////////////////////////////////////
     CorrelatorFitter fitter(corr);
@@ -140,6 +136,11 @@ int main(int argc, char *argv[])
         }
     }
     
+    if (fold)
+    {
+        corr = CorrelatorUtils::fold(corr,modelPar);
+    }
+
     // fit /////////////////////////////////////////////////////////////////////
     DVec                init(nPar);
     NloptMinimizer      globMin(NloptMinimizer::Algorithm::GN_CRS2_LM);

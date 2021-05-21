@@ -18,30 +18,42 @@
  */
 
 #include <LatAnalyze/Io/Io.hpp>
+#include <LatAnalyze/Core/OptParser.hpp>
+
 
 using namespace std;
 using namespace Latan;
 
 int main(int argc, char *argv[])
 {
+    OptParser            opt;
     Index  nSample;
     double val, err;
     string outFileName;
 
-    if (argc != 5)
+    opt.addOption("r", "seed"      , OptParser::OptType::value,   true,
+                    "random generator seed (default: random)"); 
+    opt.addOption("", "help"      , OptParser::OptType::trigger, true,
+                  "show this help message and exit");
+
+    bool parsed = opt.parse(argc, argv);
+    if (!parsed or (opt.getArgs().size() != 4) or opt.gotOption("help"))
     {
         cerr << "usage: " << argv[0];
         cerr << " <central value> <error> <nSample> <output file>" << endl;
+        cerr << endl << "Possible options:" << endl << opt << endl;
 
         return EXIT_FAILURE;
     }
+
     val         = strTo<double>(argv[1]);
     err         = strTo<double>(argv[2]);
     nSample     = strTo<Index>(argv[3]);
     outFileName = argv[4];
 
     random_device         rd;
-    mt19937               gen(rd());
+    SeedType              seed = (opt.gotOption("r")) ? opt.optionValue<SeedType>("r") : rd();
+    mt19937               gen(seed);
     normal_distribution<> dis(val, err);
     DSample               res(nSample);
 
